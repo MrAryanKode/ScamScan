@@ -1,0 +1,50 @@
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Python virtual environment
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Generated evidence images
+backend/app/outputs/*
+!backend/app/outputs/.gitkeep
+
+# Frontend dependencies and build output
+node_modules/
+.next/
+dist/
+build/
+coverage/
+
+# IDE and temporary files
+.vscode/
+.idea/
+*.log
+.DS_Store
+Thumbs.db
+
+# Local database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Protect secrets everywhere
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+# Backend virtual environment and secrets
+backend/venv/
+backend/.env

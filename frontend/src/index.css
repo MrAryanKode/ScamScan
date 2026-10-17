@@ -1,0 +1,78 @@
+/* =========================================================
+   ScamScan Global Styles
+   ========================================================= */
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+
+  margin: 0;
+}
+
+
+body {
+  overflow-x: hidden;
+}
+
+
+button,
+input {
+  font: inherit;
+}
+
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+
+img {
+  max-width: 100%;
+}
+
+
+::selection {
+  background: rgba(
+    139,
+    92,
+    246,
+    0.35
+  );
+
+  color: white;
+}
+
+/* Append these styles to frontend/src/App.css. */
+.ai-pretrained-card {
+  margin-top: 20px;
+  min-width: 0;
+}
+.ai-model-status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(160, 160, 190, 0.18);
+}
+.ai-model-status-row > span {
+  color: #a6a6ba;
+  font-size: 0.9rem;
+}
+.ai-model-status-row > strong {
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.ai-model-name { max-width: 65%; font-size: 0.85rem; }
+.ai-model-output { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+.ai-model-output code {
+  display: block;
+  padding: 14px;
+  border-radius: 10px;
+  background: rgba(127, 127, 180, 0.12);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  font-size: 0.9rem;
+}
