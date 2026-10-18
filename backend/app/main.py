@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
-
+from app.routes.auth import router as auth_router
 from app.routes.scan import router as scan_router
 
 
@@ -90,7 +90,7 @@ app.mount(
 # ---------------------------------------------------------
 
 app.include_router(scan_router)
-
+app.include_router(auth_router)
 
 # ---------------------------------------------------------
 # Basic health-check endpoint
