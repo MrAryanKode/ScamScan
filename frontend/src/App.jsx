@@ -43,7 +43,13 @@ import {
   Bot,
   BrainCircuit,
   Cpu,
-
+  ArrowRight,
+  BookOpen,
+  Eye,
+  EyeOff,
+  Menu,
+  ScanSearch,
+  UserRound,
 } from "lucide-react";
 
 
@@ -64,7 +70,10 @@ function App() {
 
 
 
-  const [page, setPage] = useState("scanner");
+  const [page, setPage] = useState("landing");
+  const [authMode, setAuthMode] = useState("login");
+  const [authMessage, setAuthMessage] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
 
 
@@ -121,6 +130,18 @@ function App() {
 
 
   const fileInputRef = useRef(null);
+
+  // Navigate to a section on the landing page, then scroll after render.
+  const goToLandingSection = (sectionId) => {
+    if (page !== "landing") {
+      setPage("landing");
+      window.setTimeout(() => {
+        document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 80);
+      return;
+    }
+    document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
 
 
@@ -883,181 +904,22 @@ function App() {
 
 
       <header className="topbar">
-
-
-
-        <div
-
-          className="brand"
-
-          onClick={() => {
-
-
-
-            setPage("scanner");
-
-
-
-            setResult(null);
-
-
-
-          }}
-
-        >
-
-
-
-          <div className="brand-icon">
-
-
-
-            <ShieldCheck size={25} />
-
-
-
-          </div>
-
-
-
-          <div>
-
-
-
-            <div className="brand-name">
-
-              ScamScan
-
-            </div>
-
-
-
-            <div className="brand-subtitle">
-
-              DIGITAL DOCUMENT FORENSICS
-
-            </div>
-
-
-
-          </div>
-
-
-
+        <button className="brand brand-button" onClick={() => setPage("landing")} aria-label="ScamScan home">
+          <span className="brand-icon"><ShieldCheck size={24} strokeWidth={2.2} /></span>
+          <span className="brand-copy"><span className="brand-name">Scam<span>Scan</span></span><span className="brand-subtitle">SCAN. DETECT. STAY SAFE.</span></span>
+        </button>
+        <nav className="nav-actions" aria-label="Main navigation">
+          <button className={`nav-button ${page === "landing" ? "active" : ""}`} onClick={() => setPage("landing")}>Home</button>
+          <button className="nav-button" onClick={() => goToLandingSection("how-it-works")}>How it works</button>
+          <button className="nav-button" onClick={() => setPage("manual")}>User manual</button>
+          <button className="nav-button" onClick={() => goToLandingSection("features")}>Features</button>
+          <button className="nav-button" onClick={() => goToLandingSection("contact")}>Contact</button>
+        </nav>
+        <div className="topbar-actions">
+          <button className="button button-quiet auth-nav" onClick={() => { setAuthMode("login"); setAuthMessage(""); setPage("auth"); }}><UserRound size={16}/> Log in</button>
+          <button className="button button-primary auth-nav" onClick={() => { setAuthMode("signup"); setAuthMessage(""); setPage("auth"); }}>Sign up <ArrowRight size={16}/></button>
+          <button className="mobile-menu-button" onClick={() => setPage(page === "landing" ? "scanner" : "landing")} aria-label="Toggle quick navigation"><Menu size={21}/></button>
         </div>
-
-
-
-
-
-        <div className="nav-actions">
-
-
-
-          <button
-
-            className={
-
-              page === "scanner"
-
-                ? "nav-button active"
-
-                : "nav-button"
-
-            }
-
-            onClick={() => {
-
-
-
-              setPage("scanner");
-
-
-
-            }}
-
-          >
-
-
-
-            <ScanLine size={16} />
-
-
-
-            Scanner
-
-
-
-          </button>
-
-
-
-
-
-          <button
-
-            className={
-
-              page === "history"
-
-                ? "nav-button active"
-
-                : "nav-button"
-
-            }
-
-            onClick={() => {
-
-
-
-              setPage("history");
-
-
-
-              fetchHistory();
-
-
-
-            }}
-
-          >
-
-
-
-            <History size={16} />
-
-
-
-            History
-
-
-
-          </button>
-
-
-
-        </div>
-
-
-
-
-
-        <div className="system-status">
-
-
-
-          <span className="status-dot"></span>
-
-
-
-          Forensic Engine Online
-
-
-
-        </div>
-
-
-
       </header>
 
 
@@ -1085,6 +947,60 @@ function App() {
             ================================================= */}
 
 
+
+        {page === "landing" && (
+          <div className="marketing-page">
+            <section className="landing-hero">
+              <div className="hero-copy">
+                <div className="eyebrow"><span className="eyebrow-dot"/> AI-ASSISTED DOCUMENT SCREENING</div>
+                <h1>Scan today.<br/><span>Stay safe tomorrow.</span></h1>
+                <p>Inspect cheque and document images with forensic indicators, text extraction, and AI-assisted image screening — all in one clear report.</p>
+                <div className="hero-actions">
+                  <button className="button button-primary button-large" onClick={() => setPage("scanner")}>Start a scan <ArrowRight size={18}/></button>
+                  <button className="button button-quiet button-large" onClick={() => goToLandingSection("how-it-works")}>See how it works</button>
+                </div>
+                <div className="hero-trust"><span><ShieldCheck size={16}/> Forensic indicators</span><span><FileText size={16}/> OCR text extraction</span><span><Activity size={16}/> Evidence report</span></div>
+              </div>
+              <div className="hero-visual" aria-label="ScamScan document analysis preview">
+                <div className="visual-topline"><span><span className="status-dot"/> Analysis workspace</span><span className="visual-tag">PRELIMINARY CHECK</span></div>
+                <div className="document-preview"><div className="doc-bank"><ShieldCheck size={19}/> DOCUMENT REVIEW <span>SCAMSCAN</span></div><div className="doc-line wide"/><div className="doc-line"/><div className="doc-row"><div className="doc-line"/><div className="doc-line short"/></div><div className="doc-stamp">UNDER REVIEW</div><div className="doc-signature">〰〰〰〰〰</div></div>
+                <div className="analysis-mini"><div><span className="mini-icon"><ScanSearch size={17}/></span><span><b>Image forensics</b><small>ELA · edges · heatmap</small></span><CheckCircle2 size={17} className="mini-check"/></div><div><span className="mini-icon"><FileText size={17}/></span><span><b>Text extraction</b><small>OCR-assisted reading</small></span><CheckCircle2 size={17} className="mini-check"/></div><div><span className="mini-icon"><BrainCircuit size={17}/></span><span><b>AI image screening</b><small>Preliminary model signal</small></span><Activity size={17} className="mini-check"/></div></div>
+                <p className="visual-note"><Lock size={13}/> Results are indicators, not proof of fraud or authenticity.</p>
+              </div>
+            </section>
+            <section className="feature-section" id="features"><div className="section-heading"><span className="section-kicker">WHAT YOU GET</span><h2>Useful signals. <span>Clear explanations.</span></h2><p>Understand what the system checks and what the results can — and cannot — tell you.</p></div><div className="feature-grid">
+              <article className="feature-card"><span className="feature-icon"><ScanSearch/></span><h3>Forensic image analysis</h3><p>Review ELA, edge activity, and heatmaps to identify regions that may deserve closer inspection.</p></article>
+              <article className="feature-card"><span className="feature-icon"><FileText/></span><h3>OCR text extraction</h3><p>Extract visible text from supported images and compare it with the original document.</p></article>
+              <article className="feature-card"><span className="feature-icon"><BrainCircuit/></span><h3>AI image screening</h3><p>Display preliminary model signals separately from the forensic heuristic score.</p></article>
+              <article className="feature-card"><span className="feature-icon"><Activity/></span><h3>Readable reports</h3><p>Explore risk indicators, findings, and generated visual evidence in one report.</p></article>
+            </div></section>
+            <section className="workflow-section" id="how-it-works"><div className="section-heading"><span className="section-kicker">SIMPLE WORKFLOW</span><h2>How ScamScan works</h2><p>Four straightforward steps to review a document image.</p></div><div className="steps-grid"><article><span className="step-number">01</span><h3>Upload an image</h3><p>Select a clear JPG, PNG, or WEBP document image.</p></article><article><span className="step-number">02</span><h3>Run the analysis</h3><p>ScamScan runs the available forensic, OCR, and AI screening steps.</p></article><article><span className="step-number">03</span><h3>Review the evidence</h3><p>Read the report and inspect the generated evidence images.</p></article><article><span className="step-number">04</span><h3>Verify independently</h3><p>Confirm important details with the bank or trusted issuer.</p></article></div></section>
+            <section className="manual-callout"><div className="manual-icon"><BookOpen size={25}/></div><div><span className="section-kicker">FIRST TIME HERE?</span><h2>Start with the user manual</h2><p>Learn how to upload a file, understand the report, and interpret limitations responsibly.</p></div><button className="button button-primary" onClick={() => setPage("manual")}>Read the guide <ArrowRight size={16}/></button></section>
+            <section className="disclaimer-strip"><AlertTriangle size={21}/><p><b>Important:</b> ScamScan provides preliminary technical indicators. A low score does not prove a document is genuine, and a high score does not prove fraud. Verify financial information with an official source.</p></section>
+          </div>
+        )}
+
+        {page === "auth" && (
+          <section className="auth-page">
+            <div className="auth-aside"><div className="auth-brand-mark"><ShieldCheck size={34}/></div><span className="section-kicker">SCAMSCAN ACCOUNT</span><h1>{authMode === "login" ? "Welcome back." : "A safer way to review."}</h1><p>{authMode === "login" ? "Continue to your document analysis workspace." : "Create an account experience for your ScamScan project."}</p><div className="auth-assurance"><ShieldCheck size={18}/><span><b>Built around clarity</b><small>Understand indicators before making decisions.</small></span></div></div>
+            <form className="auth-card" onSubmit={(event) => { event.preventDefault(); setAuthMessage("Authentication is not connected to a backend yet. The form is a UI preview; no account has been created."); }}>
+              <button type="button" className="auth-back" onClick={() => { setPage("landing"); setAuthMessage(""); }}>← Back to home</button>
+              <div className="auth-tabs"><button type="button" className={authMode === "login" ? "selected" : ""} onClick={() => { setAuthMode("login"); setAuthMessage(""); }}>Log in</button><button type="button" className={authMode === "signup" ? "selected" : ""} onClick={() => { setAuthMode("signup"); setAuthMessage(""); }}>Create account</button></div>
+              <h2>{authMode === "login" ? "Sign in to ScamScan" : "Create your account"}</h2><p className="auth-subtitle">{authMode === "login" ? "Enter your details to continue." : "A few details to get started."}</p>
+              {authMode === "signup" && <label>Full name<input type="text" name="name" placeholder="Your full name" autoComplete="name" required/></label>}
+              <label>Email address<input type="email" name="email" placeholder="you@example.com" autoComplete="email" required/></label>
+              <label>Password<div className="password-field"><input type={showPassword ? "text" : "password"} name="password" placeholder="At least 8 characters" autoComplete={authMode === "login" ? "current-password" : "new-password"} minLength={8} required/><button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Hide password" : "Show password"}>{showPassword ? <EyeOff size={17}/> : <Eye size={17}/>}</button></div></label>
+              {authMode === "signup" && <label className="terms-check"><input type="checkbox" required/> I agree to use ScamScan results as preliminary indicators.</label>}
+              <button className="button button-primary auth-submit" type="submit">{authMode === "login" ? "Continue" : "Create account"}<ArrowRight size={17}/></button>
+              {authMessage && <p className="auth-message" role="status">{authMessage}</p>}
+              <p className="auth-switch">{authMode === "login" ? "New to ScamScan?" : "Already have an account?"} <button type="button" onClick={() => { setAuthMode(authMode === "login" ? "signup" : "login"); setAuthMessage(""); }}>{authMode === "login" ? "Sign up" : "Log in"}</button></p>
+            </form>
+          </section>
+        )}
+
+        {page === "manual" && (
+          <section className="manual-page"><button className="text-back" onClick={() => setPage("landing")}>← Back to home</button><div className="section-heading manual-heading"><span className="section-kicker">SCAMSCAN GUIDE</span><h1>User manual</h1><p>A quick guide to using the current ScamScan prototype responsibly.</p></div><div className="manual-list"><article><span>01</span><div><h3>Open the scanner</h3><p>Choose “Start a scan” from the home page to open the working document scanner.</p></div></article><article><span>02</span><div><h3>Upload a clear image</h3><p>Choose a supported JPG, JPEG, PNG, or WEBP image. Keep the entire document visible and avoid sharing real sensitive documents unnecessarily.</p></div></article><article><span>03</span><div><h3>Run and read the report</h3><p>Click Analyze Document and review the risk indicators, OCR text, AI screening status, findings, and evidence images.</p></div></article><article><span>04</span><div><h3>Inspect visual evidence</h3><p>ELA, edges, and heatmaps highlight areas for review; these visualisations can also react to normal image processing.</p></div></article><article><span>05</span><div><h3>Verify outside ScamScan</h3><p>OCR can make mistakes, model scores may be uncalibrated, and the current AI model is not validated as a cheque-forgery detector. Confirm important information directly with the bank or issuer.</p></div></article></div><div className="manual-actions"><button className="button button-primary" onClick={() => setPage("scanner")}>Open scanner <ArrowRight size={16}/></button><button className="button button-quiet" onClick={() => { setAuthMode("signup"); setPage("auth"); }}>Account UI preview</button></div></section>
+        )}
 
         {page === "history" && (
 
@@ -1724,34 +1640,11 @@ function App() {
 
 
 
-      <footer className="footer">
-
-
-
-        <span>
-
-          ScamScan
-
-        </span>
-
-
-
-        <span>
-
-          Digital Document Forensics
-
-        </span>
-
-
-
-        <span>
-
-          Preliminary Analysis Engine
-
-        </span>
-
-
-
+      <footer className="footer" id="contact">
+        <div className="footer-brand"><span className="brand-icon"><ShieldCheck size={23}/></span><div><strong>Scam<span>Scan</span></strong><small>Scan. Detect. Stay safe.</small></div></div>
+        <p className="footer-description">A document-screening prototype using image forensics, OCR, and AI-assisted indicators.</p>
+        <div className="footer-contact"><b>Support & bug reports</b><a href="tel:9978025098">9978025098</a><a href="mailto:aryaniiitnr@gmail.com">aryaniiitnr@gmail.com</a></div>
+        <div className="footer-bottom"><span>© 2026 ScamScan. All rights reserved.</span><span>Developed with guidance and support from Aryan Gupta.</span></div>
       </footer>
 
 
