@@ -1,16 +1,15 @@
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+
 from app.routes.auth import router as auth_router
 from app.routes.scan import router as scan_router
 
 
 # ---------------------------------------------------------
 # Create FastAPI application
-# ---------------------------------------------------------
-# This is the main entry point of the ScamScan backend.
-# The scan router contains /full-scan and other endpoints.
 # ---------------------------------------------------------
 
 app = FastAPI(
@@ -22,9 +21,8 @@ app = FastAPI(
 
 # ---------------------------------------------------------
 # CORS configuration
-# ---------------------------------------------------------
-# Our React frontend may run on either port 5173 or 5174.
-# Both localhost and 127.0.0.1 are allowed during development.
+# Allow local development and the live Vercel frontend.
+# The origin must match the browser's website origin exactly.
 # ---------------------------------------------------------
 
 app.add_middleware(
@@ -34,6 +32,7 @@ app.add_middleware(
         "http://localhost:5174",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:5174",
+        "https://scam-scan-one.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -42,10 +41,7 @@ app.add_middleware(
 
 
 # ---------------------------------------------------------
-# Output directory
-# ---------------------------------------------------------
-# ELA, edge and heatmap services save generated evidence
-# images inside the backend outputs directory.
+# Output directory for forensic evidence images
 # ---------------------------------------------------------
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "outputs"
@@ -57,13 +53,7 @@ OUTPUT_DIR.mkdir(
 
 
 # ---------------------------------------------------------
-# Serve forensic evidence images
-# ---------------------------------------------------------
-# This allows the React frontend to display files such as:
-#
-# /outputs/ela_xxxxx.jpg
-# /outputs/edges_xxxxx.jpg
-# /outputs/heatmap_xxxxx.jpg
+# Serve generated evidence images
 # ---------------------------------------------------------
 
 app.mount(
@@ -74,23 +64,12 @@ app.mount(
 
 
 # ---------------------------------------------------------
-# Register ScamScan routes
-# ---------------------------------------------------------
-# THIS IS THE IMPORTANT PART.
-#
-# Without this line FastAPI does not know about:
-# /full-scan
-# /upload
-# /ela
-# /edges
-# /heatmap
-# /ocr
-# /history
-# etc.
+# Register API routes
 # ---------------------------------------------------------
 
 app.include_router(scan_router)
 app.include_router(auth_router)
+
 
 # ---------------------------------------------------------
 # Basic health-check endpoint
