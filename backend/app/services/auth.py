@@ -1,137 +1,102 @@
 import os
-from pathlib import Path
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from pydantic import BaseModel, EmailStr, Field
+from supabase import create_client
+from app.services.supabase_db import SUPABASE_URL, SUPABASE_SERVICE_KEY
 
-import requests
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
+if not SUPABASE_ANON_KEY:
+    raise RuntimeError("SUPABASE_ANON_KEY is missing from backend/.env")
 
-from dotenv import load_dotenv
-from fastapi import Header, HTTPException
+router = APIRouter(prefix="/api/auth", tags=["Authentication"])
+security = HTTPBearer(auto_error=False)
 
+def get_auth_client():
+    return create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-# ---------------------------------------------------------
-# Load environment variables
-# ---------------------------------------------------------
-# The .env file contains our Supabase project URL
-# and backend service key.
+class RegisterInput(BaseModel):
+    name: str = Field(min_length=2, max_length=100)
+    email: EmailStr
+    password: str = Field(min_length=8, max_length=128)
 
-BACKEND_DIR = Path(__file__).resolve().parents[2]
+class LoginInput(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=1, max_length=128)
 
-ENV_FILE = BACKEND_DIR / ".env"
-
-load_dotenv(ENV_FILE)
-
-
-# ---------------------------------------------------------
-# Read Supabase configuration
-# ---------------------------------------------------------
-
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-
-SUPABASE_SERVICE_KEY = os.getenv(
-    "SUPABASE_SERVICE_KEY"
-)
-
-
-# ---------------------------------------------------------
-# Validate configuration
-# ---------------------------------------------------------
-
-if not SUPABASE_URL:
-    raise RuntimeError(
-        "SUPABASE_URL is missing from backend/.env"
-    )
-
-if not SUPABASE_SERVICE_KEY:
-    raise RuntimeError(
-        "SUPABASE_SERVICE_KEY is missing from backend/.env"
-    )
-
-
-# ---------------------------------------------------------
-# Verify the user's access token
-# ---------------------------------------------------------
-# Supabase validates the token and returns the user data.
-# This avoids depending on the legacy HS256 JWT secret.
-
-def get_current_user(
-    authorization: str | None = Header(default=None)
-) -> dict:
-    """
-    Verify a Supabase Bearer access token.
-    """
-
-    # -----------------------------------------------------
-    # Check authorization header
-    # -----------------------------------------------------
-
-    if not authorization:
-        raise HTTPException(
-            status_code=401,
-            detail="Authorization header is missing."
-        )
-
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid authorization format."
-        )
-
-    access_token = authorization.replace(
-        "Bearer ",
-        "",
-        1
-    ).strip()
-
-    if not access_token:
-        raise HTTPException(
-            status_code=401,
-            detail="Access token is missing."
-        )
-
-    # -----------------------------------------------------
-    # Ask Supabase to validate the token
-    # -----------------------------------------------------
-
-    user_url = f"{SUPABASE_URL}/auth/v1/user"
-
-    headers = {
-        "Authorization": f"Bearer {access_token}",
-
-        "apikey": SUPABASE_SERVICE_KEY
-    }
-
+@router.post("/register", status_code=201)
+def register(data: RegisterInput):
     try:
-        response = requests.get(
-            user_url,
-            headers=headers,
-            timeout=10
-        )
+        response = get_auth_client().auth.sign_up({
+            "email": str(data.email).strip().lower(),
+            "password": data.password,
+            "options": {"data": {"name": data.name.strip()}},
+        })
+        if not response.user:
+            raise HTTPException(status_code=400, detail="Registration could not be completed.")
+        return {
+            "message": "Account created. Check your email if verification is required.",
+            "user": {
+                "id": response.user.id,
+                "email": response.user.email,
+                "name": data.name.strip(),
+            },
+            "access_token": response.session.access_token if response.session else None,
+            "token_type": "bearer",
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        print(f"Registration error: {type(exc).__name__}: {exc}")
+        raise HTTPException(status_code=400, detail="Registration failed.") from exc
 
-    except requests.RequestException:
-        raise HTTPException(
-            status_code=503,
-            detail="Unable to contact Supabase authentication."
-        )
+@router.post("/login")
+def login(data: LoginInput):
+    try:
+        response = get_auth_client().auth.sign_in_with_password({
+            "email": str(data.email).strip().lower(),
+            "password": data.password,
+        })
+        if not response.user or not response.session:
+            raise HTTPException(status_code=401, detail="Login failed.")
+        user = response.user
+        return {
+            "access_token": response.session.access_token,
+            "refresh_token": response.session.refresh_token,
+            "token_type": "bearer",
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "name": (user.user_metadata or {}).get("name", ""),
+            },
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        print(f"Login error: {type(exc).__name__}: {exc}")
+        raise HTTPException(status_code=401, detail="Login failed.") from exc
 
-    # -----------------------------------------------------
-    # Reject invalid or expired tokens
-    # -----------------------------------------------------
+def current_user(credentials: HTTPAuthorizationCredentials | None = Depends(security)):
+    """Verify bearer token server-side. Never trust a client-supplied user ID."""
+    if credentials is None or credentials.scheme.lower() != "bearer":
+        raise HTTPException(status_code=401, detail="Please sign in first.")
+    try:
+        admin_client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+        response = admin_client.auth.get_user(credentials.credentials)
+        user = response.user
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid session.")
+        return {"user": {
+            "id": user.id,
+            "email": user.email,
+            "name": (user.user_metadata or {}).get("name", ""),
+        }}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        print(f"Token verification error: {type(exc).__name__}: {exc}")
+        raise HTTPException(status_code=401, detail="Invalid or expired session.") from exc
 
-    if response.status_code != 200:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid or expired access token."
-        )
-
-    user_data = response.json()
-
-    # -----------------------------------------------------
-    # Return only required user information
-    # -----------------------------------------------------
-
-    return {
-        "user_id": user_data.get("id"),
-
-        "email": user_data.get("email"),
-
-        "role": user_data.get("role")
-    }
+@router.get("/me")
+def me(auth: dict = Depends(current_user)):
+    return auth

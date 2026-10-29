@@ -48,3 +48,14 @@ Thumbs.db
 # Backend virtual environment and secrets
 backend/venv/
 backend/.env
+
+
+# Ignore Python cache files everywhere
+**/__pycache__/
+*.pyc
+
+# Ignore local package backup
+installed-packages-backup.txt
+
+# Ignore temporary frontend archive
+frontend/src/App.zip

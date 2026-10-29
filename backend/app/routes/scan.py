@@ -3,6 +3,7 @@ from io import BytesIO
 
 from fastapi import (
     APIRouter,
+    Depends,
     File,
     HTTPException,
     UploadFile
@@ -14,6 +15,8 @@ from PIL import Image, UnidentifiedImageError
 # ---------------------------------------------------------
 # Forensic services
 # ---------------------------------------------------------
+
+from app.routes.auth import current_user
 
 from app.services.ela import (
     perform_ela
@@ -626,7 +629,8 @@ async def ocr_analysis(
 
 @router.post("/full-scan")
 async def full_scan(
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    auth: dict = Depends(current_user),
 ):
 
     """
@@ -850,6 +854,8 @@ async def full_scan(
 
     scan_record = {
 
+        "user_id": auth["user"]["id"],
+
         "scan_id": scan_id,
 
         "created_at": created_at,
@@ -967,11 +973,11 @@ async def full_scan(
 # =========================================================
 
 @router.get("/history")
-def scan_history():
+def scan_history(auth: dict = Depends(current_user)):
 
     try:
 
-        records = get_all_scan_records()
+        records = get_all_scan_records(auth["user"]["id"])
 
         return {
 
@@ -1007,13 +1013,15 @@ def scan_history():
 
 @router.get("/history/{scan_id}")
 def single_scan_history(
-    scan_id: str
+    scan_id: str,
+    auth: dict = Depends(current_user),
 ):
 
     try:
 
         record = get_scan_by_id(
-            scan_id
+            scan_id,
+            auth["user"]["id"],
         )
 
         if record is None:
